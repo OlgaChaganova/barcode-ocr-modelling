@@ -1,0 +1,4 @@
+outs:
+- md5: 02b9dc78a9bd07d2724ba4290cd75367
+  size: 28354507
+  path: yolov5s_barcode_detector.torchscript
