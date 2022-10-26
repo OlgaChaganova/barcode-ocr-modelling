@@ -3,18 +3,8 @@
 import pytorch_lightning as pl
 from torch import nn
 
-from src.configs.base import (
-    Callbacks,
-    Common,
-    Config,
-    Criterion,
-    Dataset,
-    LRScheduler,
-    Model,
-    Optimizer,
-    Project,
-    Train,
-)
+from src.configs.base import (Callbacks, Common, Config, Criterion, Dataset,
+                              LRScheduler, Model, Optimizer, Project, Train)
 
 NUM_CLASSES = 17
 IMG_SIZE = 256

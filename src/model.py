@@ -4,7 +4,7 @@ import torch.nn as nn
 import torchvision
 from torch.autograd import Variable
 
-from src.configs.base import Model, Optimizer, LRScheduler, Criterion
+from src.configs.base import Criterion, LRScheduler, Model, Optimizer
 
 
 def _get_resnet34_backbone(pretrained: bool = True):
