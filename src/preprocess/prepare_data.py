@@ -8,9 +8,10 @@ import typing as tp
 from pathlib import Path
 
 import cv2
-from detector import BarcodeDetector
 from omegaconf import OmegaConf
 from tqdm import tqdm
+
+from detector import BarcodeDetector
 
 
 def parse():
