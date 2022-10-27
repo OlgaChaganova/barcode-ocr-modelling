@@ -18,8 +18,12 @@ class Common:
 
 @dataclass
 class Dataset:
-    root: str  # path to root directory with images
+    images_dir: str  # path to root directory with images
+    annot_file: str
+    batch_size: int
+    test_size: float
     num_workers: int
+    add_border: tp.Optional[int] = 0
 
 
 @dataclass

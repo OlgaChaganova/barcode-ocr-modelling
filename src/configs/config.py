@@ -3,8 +3,8 @@
 import pytorch_lightning as pl
 from torch import nn
 
-from src.configs.base import (Callbacks, Common, Config, Criterion, Dataset,
-                              LRScheduler, Model, Optimizer, Project, Train)
+from configs.base import (Callbacks, Common, Config, Criterion, Dataset,
+                   LRScheduler, Model, Optimizer, Project, Train)
 
 NUM_CLASSES = 17
 IMG_SIZE = 256
@@ -18,16 +18,18 @@ CONFIG = Config(
     common=Common(seed=8),
 
     dataset=Dataset(
-        root='/root/cvr-hw1-modeling/raw_data/train-jpg',
+        images_dir='data/barcodes-annotated-gorai/images',
+        annot_file='data/barcodes-annotated-gorai/full_annotation.tsv',
+        batch_size=8,
+        test_size=0.1,
         num_workers=6,
     ),
 
     model=Model(
-        number_class_symbols=10,
-        time_feature_count=128,
+        number_class_symbols=11,  # 10 (0-9) + 1 (blank)
+        time_feature_count=512,
         lstm_hidden=256,
         lstm_len=3,
-        pretrained_backbone=True,
     ),
 
     train=Train(
@@ -74,7 +76,7 @@ CONFIG = Config(
         ),
 
         criterion=Criterion(
-            loss=nn.CTCLoss(blank=-1, reduction='mean', zero_infinity=True)
+            loss=nn.CTCLoss(blank=0, reduction='mean', zero_infinity=True)
         ),
         ckpt_path=None,
     ),
