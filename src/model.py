@@ -4,11 +4,11 @@ import torch.nn as nn
 import torchvision
 from torch.autograd import Variable
 
-from src.configs.base import Criterion, LRScheduler, Model, Optimizer
+from configs.base import Criterion, LRScheduler, Model, Optimizer
 
 
-def _get_resnet34_backbone(pretrained: bool = True):
-    model = torchvision.models.resnet34(pretrained=pretrained)
+def _get_resnet34_backbone():
+    model = torchvision.models.resnet34(weights=torchvision.models.ResNet34_Weights.IMAGENET1K_V1)
     input_conv = nn.Conv2d(
         in_channels=3,
         out_channels=64,
@@ -58,10 +58,9 @@ class CRNN(nn.Module):
         time_feature_count: int = 256,
         lstm_hidden: int = 256,
         lstm_len: int = 3,
-        pretrained_backbone: bool = True,
     ):
         super().__init__()
-        self.feature_extractor = _get_resnet34_backbone(pretrained=pretrained_backbone)
+        self.feature_extractor = _get_resnet34_backbone()
         self.avg_pool = nn.AdaptiveAvgPool2d((time_feature_count, time_feature_count))
         self.bi_lstm = BiLSTM(time_feature_count, lstm_hidden, lstm_len)
         self.classifier = nn.Sequential(
@@ -97,7 +96,6 @@ class OCRModel(pl.LightningModule):
             time_feature_count=model.time_feature_count,
             lstm_hidden=model.lstm_hidden,
             lstm_len=model.lstm_len,
-            pretrained_backbone=model.pretrained_backbone,
         )
 
         self.criterion = criterion.loss
@@ -108,31 +106,49 @@ class OCRModel(pl.LightningModule):
         return self.crnn(batch).log_softmax(2)
 
     def training_step(self, batch, batch_idx):
-        images, text_labels = batch
+        images, text, encoded_text = batch
         batch_size = images.shape[0]
 
         preds = self.forward(images)
 
         input_length = Variable(torch.IntTensor([preds.size(0)] * batch_size))
-        target_length = ...
+        target_length = Variable(torch.IntTensor([preds.size(0)] * batch_size))
 
-        loss = self.criterion(preds, text_labels, input_length, target_length)
+        loss = self.criterion(preds.permute(1, 0, 2), encoded_text, input_length, target_length)
         self.log('train_loss_batch', loss, on_epoch=False, on_step=True)
         self.log('train_loss_epoch', loss, on_epoch=True, on_step=False)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        images, text_labels = batch
+        images, text, encoded_text = batch
         batch_size = images.shape[0]
 
         preds = self.forward(images)
 
-        input_length = Variable(torch.IntTensor([preds.size(0)] * batch_size))
-        target_length = ...
+        # print(preds.size(1), preds.size(2))
 
-        loss = self.criterion(preds, text_labels, input_length, target_length)
+        input_length = Variable(torch.IntTensor([preds.size(1)] * batch_size))
+        target_length = Variable(torch.IntTensor([preds.size(2)] * batch_size))
+
+        # print(preds.shape, encoded_text.shape, input_length.shape, target_length.shape)
+
+        loss = self.criterion(preds.permute(1, 0, 2), encoded_text, input_length, target_length)
         self.log('val_loss_batch', loss, on_epoch=False, on_step=True)
         self.log('val_loss_epoch', loss, on_epoch=True, on_step=False)
+        return loss
+
+    def test_step(self, batch, batch_idx):
+        images, text, encoded_text = batch
+        batch_size = images.shape[0]
+
+        preds = self.forward(images)
+
+        input_length = Variable(torch.IntTensor([preds.size(1)] * batch_size))
+        target_length = Variable(torch.IntTensor([preds.size(2)] * batch_size))
+
+        loss = self.criterion(preds.permute(1, 0, 2), encoded_text, input_length, target_length)
+        self.log('test_loss_batch', loss, on_epoch=False, on_step=True)
+        self.log('test_loss_epoch', loss, on_epoch=True, on_step=False)
         return loss
 
     def configure_optimizers(self):
