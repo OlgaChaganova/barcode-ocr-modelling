@@ -50,7 +50,7 @@ CONFIG = Config(
             model_checkpoint=pl.callbacks.ModelCheckpoint(
                 dirpath='/root/cvr-hw2-ocr/checkpoints/resnet_34/',
                 save_top_k=3,
-                monitor='val_loss',
+                monitor='val_loss_epocg',
                 mode='min',
             ),
 
