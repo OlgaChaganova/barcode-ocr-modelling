@@ -23,6 +23,8 @@ class Dataset:
     batch_size: int
     test_size: float
     num_workers: int
+    img_height: int = 128
+    img_width: int = 512
     add_border: tp.Optional[int] = 0
 
 

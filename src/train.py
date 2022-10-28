@@ -34,6 +34,8 @@ def main(args: tp.Any, config: Config):
     datamodule = OCRBarcodeDataModule(
         images_dir=config.dataset.images_dir,
         annot_file=config.dataset.annot_file,
+        img_height=config.dataset.img_height,
+        img_width=config.dataset.img_width,
         batch_size=config.dataset.batch_size,
         test_size=config.dataset.test_size,
         num_workers=config.dataset.num_workers,

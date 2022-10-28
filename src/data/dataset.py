@@ -11,6 +11,7 @@ import pandas as pd
 import pytorch_lightning as pl
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
+from torchvision.transforms import functional as tvf
 
 from .encoder import Encoder
 
@@ -19,10 +20,12 @@ class OCRBarcodeDataset(Dataset):
     """Barcode OCR dataset."""
 
     def __init__(
-        self,
-        images_dir: str,
-        annot_df: pd.DataFrame,
-        add_border,
+            self,
+            images_dir: str,
+            annot_df: pd.DataFrame,
+            add_border,
+            img_height: int,
+            img_width: int,
     ):
         """
         Init OCR Barcode dataset.
@@ -37,16 +40,24 @@ class OCRBarcodeDataset(Dataset):
 
         add_border : int
             Number of pixel to be added to the true borders.
+
+        img_height : int
+            Height of the image after preprocessing and augmentations.
+
+        img_width : int
+            Width of the image after preprocessing and augmentations.
         """
         self.images_dir = images_dir
         self.annot_df = annot_df
         self.add_border = add_border
+        self.img_height = img_height
+        self.img_width = img_width
 
         self.transform = alb.Compose(
             [
                 alb.Perspective(scale=0.05, keep_size=True, pad_mode=0, pad_val=(0, 0, 0), always_apply=True),
-                alb.SmallestMaxSize(max_size=128, interpolation=0, always_apply=True),
-                alb.PadIfNeeded(min_height=128, min_width=512, border_mode=0, value=(0, 0, 0), always_apply=True),
+                alb.SmallestMaxSize(max_size=img_height, interpolation=0, always_apply=True),
+                alb.PadIfNeeded(min_height=img_height, min_width=img_width, value=(0, 0, 0), always_apply=True),
                 alb.Normalize(),
                 alb_pt.ToTensorV2(),
             ],
@@ -74,16 +85,23 @@ class OCRBarcodeDataset(Dataset):
         image.load()
         return np.array(image)
 
-    def __getitem__(self, ind) -> tp.Tuple[np.array, str, tp.List[int]]:
+    def __getitem__(self, ind):
         add = self.add_border
         filename, text, p1, p2 = self.annot_df.iloc[ind, :]
         image = self.load_image(filename)
         y_min, x_min = list(map(int, p1.replace('(', '').replace(')', '').split(',')))
         y_max, x_max = list(map(int, p2.replace('(', '').replace(')', '').split(',')))
-        image = image[(y_min - add):(y_max + add), (x_min - add):(x_max + add), :]
+
+        image = image[(y_min - add):(y_max + add), (x_min - add):(x_max + add), :]  # crop by bbox
+
         if image.shape[0] > image.shape[1]:
             image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+
         image = self.transform(image=image)['image']
+
+        if image.shape != (3, self.img_height, self.img_width):
+            image = tvf.resize(image, size=[self.img_height, self.img_width])
+
         encoded_text = Encoder.encode(text)
         return image, text, encoded_text
 
@@ -93,6 +111,8 @@ class OCRBarcodeDataModule(pl.LightningDataModule):
         self,
         images_dir: str,
         annot_file: str,
+        img_height: int,
+        img_width: int,
         batch_size: int,
         test_size: float,
         num_workers: int,
@@ -107,6 +127,12 @@ class OCRBarcodeDataModule(pl.LightningDataModule):
 
         annot_file : str
             Path to annotations file (full_annotation.tsv).
+
+        img_height : int
+            Height of the image after preprocessing and augmentations.
+
+        img_width : int
+            Width of the image after preprocessing and augmentations.
 
         batch_size : int
             Batch size for dataloaders.
@@ -128,6 +154,8 @@ class OCRBarcodeDataModule(pl.LightningDataModule):
         self.images_dir = images_dir
         self.num_workers = num_workers
         self.add_border = add_border
+        self.img_height = img_height
+        self.img_width = img_width
 
         self._train_val_test_split(annot_file, test_size)
 
@@ -137,6 +165,8 @@ class OCRBarcodeDataModule(pl.LightningDataModule):
                 images_dir=self.images_dir,
                 annot_df=self.train_annot_df,
                 add_border=self.add_border,
+                img_height=self.img_height,
+                img_width=self.img_width,
             )
             num_train_files = len(self.train_dataset)
             logging.info(f'Mode: train, number of files: {num_train_files}')
@@ -145,6 +175,8 @@ class OCRBarcodeDataModule(pl.LightningDataModule):
                 images_dir=self.images_dir,
                 annot_df=self.val_annot_df,
                 add_border=self.add_border,
+                img_height=self.img_height,
+                img_width=self.img_width,
             )
             num_val_files = len(self.val_dataset)
             logging.info(f'Mode: val, number of files: {num_val_files}')
@@ -154,6 +186,8 @@ class OCRBarcodeDataModule(pl.LightningDataModule):
                 images_dir=self.images_dir,
                 annot_df=self.test_annot_df,
                 add_border=self.add_border,
+                img_height=self.img_height,
+                img_width=self.img_width,
             )
             num_test_files = len(self.test_dataset)
             logging.info(f'Mode: test, number of files: {num_test_files}')

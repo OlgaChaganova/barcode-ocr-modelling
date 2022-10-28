@@ -23,6 +23,8 @@ CONFIG = Config(
         batch_size=8,
         test_size=0.1,
         num_workers=6,
+        img_height=128,
+        img_width=512,
     ),
 
     model=Model(
@@ -50,7 +52,7 @@ CONFIG = Config(
             model_checkpoint=pl.callbacks.ModelCheckpoint(
                 dirpath='/root/cvr-hw2-ocr/checkpoints/resnet_34/',
                 save_top_k=3,
-                monitor='val_loss_epocg',
+                monitor='val_loss_epoch',
                 mode='min',
             ),
 

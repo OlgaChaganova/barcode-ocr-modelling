@@ -130,7 +130,8 @@ class OCRModel(pl.LightningModule):
         input_length = Variable(torch.IntTensor([preds.size(1)] * batch_size))
         target_length = Variable(torch.IntTensor([preds.size(2)] * batch_size))
 
-        # print(preds.shape, encoded_text.shape, input_length.shape, target_length.shape)
+        print(preds.shape, encoded_text.shape, input_length.shape, target_length.shape)
+        print(type(preds), type(encoded_text), type(input_length), type(target_length))
 
         loss = self.criterion(preds.permute(1, 0, 2), encoded_text, input_length, target_length)
         self.log('val_loss_batch', loss, on_epoch=False, on_step=True)
@@ -145,6 +146,8 @@ class OCRModel(pl.LightningModule):
 
         input_length = Variable(torch.IntTensor([preds.size(1)] * batch_size))
         target_length = Variable(torch.IntTensor([preds.size(2)] * batch_size))
+
+        print(type(preds), type(encoded_text), type(input_length), type(target_length))
 
         loss = self.criterion(preds.permute(1, 0, 2), encoded_text, input_length, target_length)
         self.log('test_loss_batch', loss, on_epoch=False, on_step=True)
