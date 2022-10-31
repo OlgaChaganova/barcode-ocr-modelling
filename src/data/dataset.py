@@ -55,9 +55,9 @@ class OCRBarcodeDataset(Dataset):
 
         self.transform = alb.Compose(
             [
-                alb.Perspective(scale=0.05, keep_size=True, pad_mode=0, pad_val=(0, 0, 0), always_apply=True),
+                # alb.Perspective(scale=0.05, keep_size=True, pad_mode=0, pad_val=(0, 0, 0), always_apply=True),
                 alb.SmallestMaxSize(max_size=img_height, interpolation=0, always_apply=True),
-                alb.PadIfNeeded(min_height=img_height, min_width=img_width, value=(0, 0, 0), always_apply=True),
+                alb.PadIfNeeded(min_height=img_height, min_width=img_width, border_mode=0, value=(0, 0, 0), always_apply=True),
                 alb.Normalize(),
                 alb_pt.ToTensorV2(),
             ],
