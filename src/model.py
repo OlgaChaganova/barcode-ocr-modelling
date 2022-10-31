@@ -106,12 +106,12 @@ class OCRModel(pl.LightningModule):
         return self.crnn(batch)
 
     def training_step(self, batch, batch_idx):
-        images, text, encoded_text = batch
+        images, _, encoded_text, target_length = batch
 
         preds = self.forward(images)  # [time_steps, batch_size, alphabet_size (10 цифр + 1 для blank символа)]
 
         input_length = torch.full(size=(preds.size(1),), fill_value=preds.size(0), dtype=torch.long)
-        target_length = torch.full(size=(preds.size(1),), fill_value=len(text[0]), dtype=torch.long)  # text[0] тк все размер строки везде одинаковый (13)
+        # target_length = torch.full(size=(preds.size(1),), fill_value=len(text[0]), dtype=torch.long)
 
         loss = self.criterion(preds, encoded_text, input_length, target_length)
         self.log('train_loss_batch', loss, on_epoch=False, on_step=True)
@@ -119,14 +119,14 @@ class OCRModel(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        images, text, encoded_text = batch
+        images, _, encoded_text, target_length = batch
 
         preds = self.forward(images)
 
         input_length = torch.full(size=(preds.size(1),), fill_value=preds.size(0), dtype=torch.long)
-        target_length = torch.full(size=(preds.size(1),), fill_value=len(text[0]), dtype=torch.long)
+        # target_length = torch.full(size=(preds.size(1),), fill_value=len(text[0]), dtype=torch.long)
 
-        print(input_length.shape, target_length.shape)
+        # print(input_length.shape, target_length.shape)
 
         loss = self.criterion(preds, encoded_text, input_length, target_length)
         self.log('val_loss_batch', loss, on_epoch=False, on_step=True)
@@ -134,12 +134,12 @@ class OCRModel(pl.LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx):
-        images, text, encoded_text = batch
+        images, _, encoded_text, target_length = batch
 
         preds = self.forward(images)
 
         input_length = torch.full(size=(preds.size(1),), fill_value=preds.size(0), dtype=torch.long)
-        target_length = torch.full(size=(preds.size(1),), fill_value=len(text[0]), dtype=torch.long)
+        # target_length = torch.full(size=(preds.size(1),), fill_value=len(text[0]), dtype=torch.long)
 
         loss = self.criterion(preds, encoded_text, input_length, target_length)
         self.log('test_loss_batch', loss, on_epoch=False, on_step=True)

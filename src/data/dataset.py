@@ -103,7 +103,7 @@ class OCRBarcodeDataset(Dataset):
             image = tvf.resize(image, size=[self.img_height, self.img_width])
 
         encoded_text = Encoder.encode(text)
-        return image, text, encoded_text
+        return image, text, encoded_text, len(text)
 
 
 class OCRBarcodeDataModule(pl.LightningDataModule):
