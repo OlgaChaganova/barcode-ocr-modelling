@@ -20,16 +20,16 @@ CONFIG = Config(
     dataset=Dataset(
         images_dir='data/barcodes-annotated-gorai/images',
         annot_file='data/barcodes-annotated-gorai/full_annotation.tsv',
-        batch_size=8,
+        batch_size=48,
         test_size=0.1,
         num_workers=6,
         img_height=128,
-        img_width=512,
+        img_width=256,
     ),
 
     model=Model(
         number_class_symbols=11,  # 10 (0-9) + 1 (blank)
-        time_feature_count=512,
+        time_feature_count=324,
         lstm_hidden=256,
         lstm_len=3,
     ),
@@ -38,20 +38,20 @@ CONFIG = Config(
         trainer_params={
             'devices': 1,
             'accelerator': 'auto',
-            'accumulate_grad_batches': 4,
+            'accumulate_grad_batches': 2,
             'auto_scale_batch_size': None,
             'gradient_clip_val': 0,
             'benchmark': True,
             'precision': 32,
-            'profiler': 'simple',
-            'max_epochs': 10,
+            'profiler': None,
+            'max_epochs': 1,
             'auto_lr_find': None,
         },
 
         callbacks=Callbacks(
             model_checkpoint=pl.callbacks.ModelCheckpoint(
                 dirpath='/root/cvr-hw2-ocr/checkpoints/resnet_34/',
-                save_top_k=3,
+                save_top_k=2,
                 monitor='val_loss_epoch',
                 mode='min',
             ),
@@ -68,17 +68,15 @@ CONFIG = Config(
         ),
 
         lr_scheduler=LRScheduler(
-            name='ReduceLROnPlateau',
+            name='CosineAnnealingLR',
             lr_sched_params={
-                'patience': 3,
-                'factor': 0.1,
-                'mode': 'min',
-                'min_lr': 0.00001,
+                'T_max': 50,
+                'eta_min': 0.00001,
             },
         ),
 
         criterion=Criterion(
-            loss=nn.CTCLoss(blank=0, reduction='mean', zero_infinity=True)
+            loss=nn.CTCLoss(blank=0, reduction='mean', zero_infinity=False)
         ),
         ckpt_path=None,
     ),
