@@ -58,7 +58,7 @@ class OCRBarcodeDataset(Dataset):
                 # alb.Perspective(scale=0.05, keep_size=True, pad_mode=0, pad_val=(0, 0, 0), always_apply=True),
                 alb.SmallestMaxSize(max_size=img_height, interpolation=0, always_apply=True),
                 alb.PadIfNeeded(min_height=img_height, min_width=img_width, border_mode=0, value=(0, 0, 0), always_apply=True),
-                alb.Normalize(),
+                # alb.Normalize(),
                 alb_pt.ToTensorV2(),
             ],
         )
@@ -93,11 +93,12 @@ class OCRBarcodeDataset(Dataset):
         y_max, x_max = list(map(int, p2.replace('(', '').replace(')', '').split(',')))
 
         image = image[(y_min - add):(y_max + add), (x_min - add):(x_max + add), :]  # crop by bbox
+        image = image[(image.shape[0] // 2):, :, :]  # crop by half of the image
 
         if image.shape[0] > image.shape[1]:
             image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
 
-        image = self.transform(image=image)['image']
+        image = self.transform(image=image)['image'] / 255.
 
         if image.shape != (3, self.img_height, self.img_width):
             image = tvf.resize(image, size=[self.img_height, self.img_width])
