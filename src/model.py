@@ -78,7 +78,7 @@ class CRNN(nn.Module):
         x = x.transpose(1, 2)
         x = self.bi_lstm(x)
         x = self.classifier(x)
-        return x
+        return nn.functional.log_softmax(x, dim=2).permute(1, 0, 2)  # [time_stamps, batch_size, alphabet_size]
 
 
 class OCRModel(pl.LightningModule):
@@ -106,15 +106,17 @@ class OCRModel(pl.LightningModule):
         return self.crnn(batch).log_softmax(2)
 
     def training_step(self, batch, batch_idx):
-        images, text, encoded_text = batch
+        images, _, encoded_text = batch
         batch_size = images.shape[0]
 
-        preds = self.forward(images)
+        preds = self.forward(images)  # [time_stamps, batch_size, alphabet_size]
+        print(preds.shape)
 
-        input_length = Variable(torch.IntTensor([preds.size(0)] * batch_size))
-        target_length = Variable(torch.IntTensor([preds.size(0)] * batch_size))
+        input_length = torch.full(size=(preds.size(1),), fill_value=preds.size(0), dtype=torch.long)
+        target_length = torch.full(size=(preds.size(1),), fill_value=preds.size(2), dtype=torch.long)
+        # target_length = Variable(torch.IntTensor([preds.size(2)] * batch_size))
 
-        loss = self.criterion(preds.permute(1, 0, 2), encoded_text, input_length, target_length)
+        loss = self.criterion(preds, encoded_text, input_length, target_length)
         self.log('train_loss_batch', loss, on_epoch=False, on_step=True)
         self.log('train_loss_epoch', loss, on_epoch=True, on_step=False)
         return loss
@@ -125,15 +127,11 @@ class OCRModel(pl.LightningModule):
 
         preds = self.forward(images)
 
-        # print(preds.size(1), preds.size(2))
+        input_length = torch.full(size=(preds.size(1),), fill_value=preds.size(0), dtype=torch.long)
+        target_length = torch.full(size=(preds.size(1),), fill_value=preds.size(2), dtype=torch.long)
+        # target_length = Variable(torch.IntTensor([preds.size(2)] * batch_size))
 
-        input_length = Variable(torch.IntTensor([preds.size(1)] * batch_size))
-        target_length = Variable(torch.IntTensor([preds.size(2)] * batch_size))
-
-        print(preds.shape, encoded_text.shape, input_length.shape, target_length.shape)
-        print(type(preds), type(encoded_text), type(input_length), type(target_length))
-
-        loss = self.criterion(preds.permute(1, 0, 2), encoded_text, input_length, target_length)
+        loss = self.criterion(preds, encoded_text, input_length, target_length)
         self.log('val_loss_batch', loss, on_epoch=False, on_step=True)
         self.log('val_loss_epoch', loss, on_epoch=True, on_step=False)
         return loss
@@ -144,12 +142,11 @@ class OCRModel(pl.LightningModule):
 
         preds = self.forward(images)
 
-        input_length = Variable(torch.IntTensor([preds.size(1)] * batch_size))
-        target_length = Variable(torch.IntTensor([preds.size(2)] * batch_size))
+        input_length = torch.full(size=(preds.size(1),), fill_value=preds.size(0), dtype=torch.long)
+        target_length = torch.full(size=(preds.size(1),), fill_value=preds.size(2), dtype=torch.long)
+        # target_length = Variable(torch.IntTensor([preds.size(2)] * batch_size))
 
-        print(type(preds), type(encoded_text), type(input_length), type(target_length))
-
-        loss = self.criterion(preds.permute(1, 0, 2), encoded_text, input_length, target_length)
+        loss = self.criterion(preds, encoded_text, input_length, target_length)
         self.log('test_loss_batch', loss, on_epoch=False, on_step=True)
         self.log('test_loss_epoch', loss, on_epoch=True, on_step=False)
         return loss
