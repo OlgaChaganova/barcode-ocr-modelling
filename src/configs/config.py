@@ -6,8 +6,6 @@ from torch import nn
 from configs.base import (Callbacks, Common, Config, Criterion, Dataset,
                    LRScheduler, Model, Optimizer, Project, Train)
 
-NUM_CLASSES = 17
-IMG_SIZE = 256
 
 CONFIG = Config(
     project=Project(
@@ -24,12 +22,12 @@ CONFIG = Config(
         test_size=0.1,
         num_workers=6,
         img_height=128,
-        img_width=256,
+        img_width=512,
     ),
 
     model=Model(
         number_class_symbols=11,  # 10 (0-9) + 1 (blank)
-        time_feature_count=324,
+        time_feature_count=256,
         lstm_hidden=256,
         lstm_len=3,
     ),
@@ -44,7 +42,7 @@ CONFIG = Config(
             'benchmark': True,
             'precision': 32,
             'profiler': None,
-            'max_epochs': 1,
+            'max_epochs': 100,
             'auto_lr_find': None,
         },
 
@@ -68,15 +66,15 @@ CONFIG = Config(
         ),
 
         lr_scheduler=LRScheduler(
-            name='CosineAnnealingLR',
+            name='StepLR',
             lr_sched_params={
-                'T_max': 50,
-                'eta_min': 0.00001,
+                'step_size': 10,
+                'gamma': 0.1,
             },
         ),
 
         criterion=Criterion(
-            loss=nn.CTCLoss(blank=0, reduction='mean', zero_infinity=False)
+            loss=nn.CTCLoss(blank=0, reduction='mean', zero_infinity=True)
         ),
         ckpt_path=None,
     ),
