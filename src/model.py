@@ -111,7 +111,6 @@ class OCRModel(pl.LightningModule):
         preds = self.forward(images)  # [time_steps, batch_size, alphabet_size (10 цифр + 1 для blank символа)]
 
         input_length = torch.full(size=(preds.size(1),), fill_value=preds.size(0), dtype=torch.long)
-        # target_length = torch.full(size=(preds.size(1),), fill_value=len(text[0]), dtype=torch.long)
 
         loss = self.criterion(preds, encoded_text, input_length, target_length)
         self.log('train_loss_batch', loss, on_epoch=False, on_step=True)
@@ -124,9 +123,7 @@ class OCRModel(pl.LightningModule):
         preds = self.forward(images)
 
         input_length = torch.full(size=(preds.size(1),), fill_value=preds.size(0), dtype=torch.long)
-        # target_length = torch.full(size=(preds.size(1),), fill_value=len(text[0]), dtype=torch.long)
 
-        # print(input_length.shape, target_length.shape)
 
         loss = self.criterion(preds, encoded_text, input_length, target_length)
         self.log('val_loss_batch', loss, on_epoch=False, on_step=True)
@@ -139,7 +136,6 @@ class OCRModel(pl.LightningModule):
         preds = self.forward(images)
 
         input_length = torch.full(size=(preds.size(1),), fill_value=preds.size(0), dtype=torch.long)
-        # target_length = torch.full(size=(preds.size(1),), fill_value=len(text[0]), dtype=torch.long)
 
         loss = self.criterion(preds, encoded_text, input_length, target_length)
         self.log('test_loss_batch', loss, on_epoch=False, on_step=True)
