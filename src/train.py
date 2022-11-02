@@ -10,6 +10,7 @@ from pytorch_lightning.callbacks.progress import TQDMProgressBar
 from configs.base import Config
 from data.dataset import OCRBarcodeDataModule
 from model import OCRModel
+from utils import get_config_dict
 
 
 def parse() -> tp.Any:
@@ -45,6 +46,10 @@ def main(args: tp.Any, config: Config):
     if args.log:
         # clearml task
         task = Task.init(project_name=config.project.project_name, task_name=config.project.task_name)
+
+        # save configuration
+        config_dict = get_config_dict(model=model, datamodule=datamodule, config=config)
+        task.connect(config_dict)
 
         # save config.py for reproducibility
         task.upload_artifact('exp_config', artifact_object=args.config, delete_after_upload=False)
