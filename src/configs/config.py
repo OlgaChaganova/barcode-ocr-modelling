@@ -10,7 +10,7 @@ from configs.base import (Callbacks, Common, Config, Criterion, Dataset,
 CONFIG = Config(
     project=Project(
         project_name='cvr-hw2-ocr-modelling',
-        task_name='ocr_resnet34',
+        task_name='ocr_resnet34_20-22',
     ),
 
     common=Common(seed=8),
@@ -18,25 +18,26 @@ CONFIG = Config(
     dataset=Dataset(
         images_dir='data/barcodes-annotated-gorai/images',
         annot_file='data/barcodes-annotated-gorai/full_annotation.tsv',
-        batch_size=48,
+        batch_size=128,
         test_size=0.1,
         num_workers=6,
         img_height=128,
         img_width=512,
+        add_border=5,
     ),
 
     model=Model(
         number_class_symbols=11,  # 10 (0-9) + 1 (blank)
-        time_feature_count=256,
-        lstm_hidden=256,
-        lstm_len=3,
+        time_feature_count=64,
+        lstm_hidden=128,
+        lstm_len=1,
     ),
 
     train=Train(
         trainer_params={
             'devices': 1,
             'accelerator': 'auto',
-            'accumulate_grad_batches': 2,
+            'accumulate_grad_batches': 1,
             'auto_scale_batch_size': None,
             'gradient_clip_val': 0,
             'benchmark': True,
@@ -48,7 +49,7 @@ CONFIG = Config(
 
         callbacks=Callbacks(
             model_checkpoint=pl.callbacks.ModelCheckpoint(
-                dirpath='/root/cvr-hw2-ocr/checkpoints/resnet_34/',
+                dirpath='checkpoints/resnet34_20-22/',
                 save_top_k=2,
                 monitor='val_loss_epoch',
                 mode='min',
@@ -60,21 +61,21 @@ CONFIG = Config(
         optimizer=Optimizer(
             name='Adam',
             opt_params={
-                'lr': 0.001,
+                'lr': 1e-3,
                 'weight_decay': 0.0001,
             },
         ),
 
         lr_scheduler=LRScheduler(
-            name='StepLR',
+            name='CosineAnnealingLR',
             lr_sched_params={
-                'step_size': 10,
-                'gamma': 0.1,
+                'T_max': 500,
+                'eta_min': 1e-8,
             },
         ),
 
         criterion=Criterion(
-            loss=nn.CTCLoss(blank=0, reduction='mean', zero_infinity=True)
+            loss=nn.CTCLoss(blank=10, reduction='mean', zero_infinity=True)
         ),
         ckpt_path=None,
     ),
