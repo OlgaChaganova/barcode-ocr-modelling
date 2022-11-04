@@ -1,36 +1,9 @@
-import typing as tp
-from collections import namedtuple
-
 import pytorch_lightning as pl
 
 
 from configs.config import Config
 from configs.config import LRScheduler
 from configs.config import Optimizer
-
-
-def convert_dict_to_tuple(dictionary: dict) -> tp.NamedTuple:
-    for key, value in dictionary.items():
-        if isinstance(value, dict):
-            dictionary[key] = convert_dict_to_tuple(value)
-    return namedtuple('GenericDict', dictionary.keys())(**dictionary)
-
-
-def flatten_dict(dictionary: dict, parent_key: str = '', sep: str = '_') -> dict:
-    items = []
-    for k, v in dictionary.items():
-        new_key = parent_key + sep + k if parent_key else k
-        if isinstance(v, dict):
-            items.extend(flatten_dict(v, new_key, sep=sep).items())
-        else:
-            items.append((new_key, v))
-    return dict(items)
-
-
-def convert_namedtuple_to_dict(named_tuple: tp.NamedTuple) -> dict:
-    params_dict = dict(named_tuple._asdict())
-    params_dict.pop('name', None)
-    return params_dict
 
 
 def _get_dict_for_optimizer(config_optimizer: Optimizer) -> dict:
@@ -57,7 +30,7 @@ def get_config_dict(model: pl.LightningModule, datamodule: pl.LightningDataModul
     optimizer_dict = _get_dict_for_optimizer(config.train.optimizer)
     lr_sched_dict = _get_dict_for_lr_scheduler(config.train.lr_scheduler)
 
-    # using update to avoid doubling keys for img_size, num_channels, num_classes
+    # using update to avoid doubling keys
     config_dict.update(model_dict)
     config_dict.update(datamodule_dict)
     config_dict.update(trainer_dict)
