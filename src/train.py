@@ -1,11 +1,15 @@
 import argparse
+import logging
+import os
 import typing as tp
 from runpy import run_path
 
+import wandb
 from clearml import Task
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import RichModelSummary
 from pytorch_lightning.callbacks.progress import TQDMProgressBar
+from pytorch_lightning.loggers import WandbLogger
 
 from configs.base import Config
 from data.dataset import OCRBarcodeDataModule
@@ -21,10 +25,16 @@ def parse() -> tp.Any:
     parser.add_argument(
         '--log', action=argparse.BooleanOptionalAction, help='Log experiment or not (for debug)',
     )
+    parser.add_argument(
+        '--logger', type=str, choices=['clearml', 'wandb'], help='Logger',
+    )
+
     return parser.parse_args()
 
 
 def main(args: tp.Any, config: Config):
+    logging.basicConfig(level=logging.INFO)
+
     model = OCRModel(
         model=config.model,
         optimizer=config.train.optimizer,
@@ -44,21 +54,33 @@ def main(args: tp.Any, config: Config):
     )
 
     if args.log:
-        # clearml task
-        task = Task.init(project_name=config.project.project_name, task_name=config.project.task_name)
-
-        # save configuration
         config_dict = get_config_dict(model=model, datamodule=datamodule, config=config)
-        task.connect(config_dict)
+        if args.logger == 'clearml':
+            task = Task.init(project_name=config.project.project_name, task_name=config.project.task_name)
+            task.connect(config_dict)
+            task.upload_artifact('exp_config', artifact_object=args.config, delete_after_upload=False)
+            logger=True
 
-        # save config.py for reproducibility
-        task.upload_artifact('exp_config', artifact_object=args.config, delete_after_upload=False)
+        elif args.logger == 'wandb':
+            logger = WandbLogger(
+                project=config.project.project_name,
+                config=config_dict,
+                log_model='all',
+            )
+            logger.watch(
+                model=model,
+                log='all',
+                log_freq=5,  # log gradients and parameters every log_freq batches
+            )
+            base_path = os.path.split(args.config)[0]
+            wandb.save(args.config, base_path=base_path, policy='now')
 
     # trainer
     trainer_params = config.train.trainer_params
     callbacks = list(config.train.callbacks.__dict__.values())
     callbacks = filter(lambda callback: callback is not None, callbacks)
     trainer = Trainer(
+        logger=logger,
         callbacks=[
             TQDMProgressBar(refresh_rate=1),
             RichModelSummary(),
@@ -80,6 +102,8 @@ def main(args: tp.Any, config: Config):
         model=model,
         datamodule=datamodule,
     )
+    if args.log and args.logger == 'clearml':
+        task.close()
 
 
 if __name__ == '__main__':
