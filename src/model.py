@@ -1,3 +1,5 @@
+import logging
+
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
@@ -38,8 +40,8 @@ class BiLSTM(nn.Module):
     ):
         super().__init__()
         self.lstm = nn.LSTM(
-            input_size,
-            hidden_size,
+            input_size,  # The number of expected features in the input x
+            hidden_size,  # The number of features in the hidden state h
             num_layers,
             dropout=dropout,
             bidirectional=True,
@@ -48,7 +50,7 @@ class BiLSTM(nn.Module):
 
     def forward(self, x):
         out, _ = self.lstm(x)
-        return out
+        return out  #  output features (h_t) from the last layer of the LSTM, for each t
 
 
 class CRNN(nn.Module):
@@ -61,23 +63,27 @@ class CRNN(nn.Module):
     ):
         super().__init__()
         self.feature_extractor = _get_resnet34_backbone()
-        self.avg_pool = nn.AdaptiveAvgPool2d((time_feature_count, time_feature_count))
-        self.bi_lstm = BiLSTM(time_feature_count, lstm_hidden, lstm_len)
+        self.bi_lstm = BiLSTM(
+            input_size=time_feature_count,
+            hidden_size=lstm_hidden,
+            num_layers=lstm_len,
+        )
         self.classifier = nn.Sequential(
             nn.Linear(lstm_hidden * 2, time_feature_count),
             nn.GELU(),
             nn.Dropout(0.1),
             nn.Linear(time_feature_count, number_class_symbols)
         )
+        self.time_feature_count = time_feature_count
 
     def forward(self, x):
         x = self.feature_extractor(x)
         b, c, h, w = x.size()
         x = x.view(b, c * h, w)
-        x = self.avg_pool(x)
+        x = nn.functional.adaptive_avg_pool2d(x, (self.time_feature_count, w))
         x = x.transpose(1, 2)
         x = self.bi_lstm(x)
-        x = self.classifier(x) # [batch_size, time_steps, alphabet_size]
+        x = self.classifier(x)  # [batch_size, time_steps, alphabet_size]
         return nn.functional.log_softmax(x, dim=2).permute(1, 0, 2)  # [time_steps, batch_size, alphabet_size]
 
 
@@ -113,8 +119,8 @@ class OCRModel(pl.LightningModule):
         input_length = torch.full(size=(preds.size(1),), fill_value=preds.size(0), dtype=torch.long)
 
         loss = self.criterion(preds, encoded_text, input_length, target_length)
-        self.log('train_loss_batch', loss, on_epoch=False, on_step=True)
-        self.log('train_loss_epoch', loss, on_epoch=True, on_step=False)
+        self.log('train_loss_batch', loss, on_epoch=False, on_step=True, batch_size=images.shape[0])
+        self.log('train_loss_epoch', loss, on_epoch=True, on_step=False, batch_size=images.shape[0])
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -124,10 +130,10 @@ class OCRModel(pl.LightningModule):
 
         input_length = torch.full(size=(preds.size(1),), fill_value=preds.size(0), dtype=torch.long)
 
-
         loss = self.criterion(preds, encoded_text, input_length, target_length)
-        self.log('val_loss_batch', loss, on_epoch=False, on_step=True)
-        self.log('val_loss_epoch', loss, on_epoch=True, on_step=False)
+        logging.info(f'VAl loss: {loss.item()}')
+        self.log('val_loss_batch', loss, on_epoch=False, on_step=True, batch_size=images.shape[0])
+        self.log('val_loss_epoch', loss, on_epoch=True, on_step=False, batch_size=images.shape[0])
         return loss
 
     def test_step(self, batch, batch_idx):
@@ -138,8 +144,8 @@ class OCRModel(pl.LightningModule):
         input_length = torch.full(size=(preds.size(1),), fill_value=preds.size(0), dtype=torch.long)
 
         loss = self.criterion(preds, encoded_text, input_length, target_length)
-        self.log('test_loss_batch', loss, on_epoch=False, on_step=True)
-        self.log('test_loss_epoch', loss, on_epoch=True, on_step=False)
+        self.log('test_loss_batch', loss, on_epoch=False, on_step=True, batch_size=images.shape[0])
+        self.log('test_loss_epoch', loss, on_epoch=True, on_step=False, batch_size=images.shape[0])
         return loss
 
     def configure_optimizers(self):
