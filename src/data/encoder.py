@@ -8,10 +8,10 @@ class Encoder(object):
     @staticmethod
     def encode(text: str) -> torch.tensor:
         text = list(map(int, list(text)))
-        return torch.tensor(text) + 1  # + 1 because blank is 0
+        return torch.tensor(text)
 
     @staticmethod
     def decode(encoded_text: torch.tensor) -> str:
-        text = (encoded_text - 1).tolist()
+        text = encoded_text.tolist()
         text = list(map(str, text))
         return ''.join(text)
