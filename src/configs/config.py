@@ -10,7 +10,7 @@ from configs.base import (Callbacks, Common, Config, Criterion, Dataset,
 CONFIG = Config(
     project=Project(
         project_name='cvr-hw2-ocr-modelling',
-        task_name='ocr_resnet34_20-22',
+        task_name='ocr_resnet34_500epochs',
     ),
 
     common=Common(seed=8),
@@ -43,13 +43,13 @@ CONFIG = Config(
             'benchmark': True,
             'precision': 32,
             'profiler': None,
-            'max_epochs': 100,
+            'max_epochs': 500,
             'auto_lr_find': None,
         },
 
         callbacks=Callbacks(
             model_checkpoint=pl.callbacks.ModelCheckpoint(
-                dirpath='checkpoints/resnet34_20-22/',
+                dirpath='checkpoints/resnet34_500epochs/',
                 save_top_k=2,
                 monitor='val_loss_epoch',
                 mode='min',
@@ -75,7 +75,7 @@ CONFIG = Config(
         ),
 
         criterion=Criterion(
-            loss=nn.CTCLoss(blank=10, reduction='mean', zero_infinity=True)
+            loss=nn.CTCLoss(blank=10, reduction='mean', zero_infinity=True),
         ),
         ckpt_path=None,
     ),
