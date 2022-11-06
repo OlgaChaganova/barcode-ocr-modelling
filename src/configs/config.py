@@ -3,14 +3,12 @@
 import pytorch_lightning as pl
 from torch import nn
 
-from configs.base import (Callbacks, Common, Config, Criterion, Dataset,
-                   LRScheduler, Model, Optimizer, Project, Train)
-
+from configs.base import Callbacks, Common, Config, Criterion, Dataset, LRScheduler, Model, Optimizer, Project, Train
 
 CONFIG = Config(
     project=Project(
         project_name='cvr-hw2-ocr-modelling',
-        task_name='ocr_resnet34_500epochs',
+        task_name='ocr_resnet34_500epochs_normalize',
     ),
 
     common=Common(seed=8),
@@ -49,7 +47,7 @@ CONFIG = Config(
 
         callbacks=Callbacks(
             model_checkpoint=pl.callbacks.ModelCheckpoint(
-                dirpath='checkpoints/resnet34_500epochs/',
+                dirpath='checkpoints/resnet34_500epochs_normalize/',
                 save_top_k=2,
                 monitor='val_loss_epoch',
                 mode='min',

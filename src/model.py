@@ -2,9 +2,8 @@ import logging
 
 import pytorch_lightning as pl
 import torch
-import torch.nn as nn
 import torchvision
-from torch.autograd import Variable
+from torch import nn  # noqa: WPS458
 
 from configs.base import Criterion, LRScheduler, Model, Optimizer
 
@@ -50,7 +49,7 @@ class BiLSTM(nn.Module):
 
     def forward(self, x):
         out, _ = self.lstm(x)
-        return out  #  output features (h_t) from the last layer of the LSTM, for each t
+        return out  # output features (h_t) from the last layer of the LSTM, for each t
 
 
 class CRNN(nn.Module):
@@ -72,7 +71,7 @@ class CRNN(nn.Module):
             nn.Linear(lstm_hidden * 2, time_feature_count),
             nn.GELU(),
             nn.Dropout(0.1),
-            nn.Linear(time_feature_count, number_class_symbols)
+            nn.Linear(time_feature_count, number_class_symbols),
         )
         self.time_feature_count = time_feature_count
 
@@ -165,5 +164,3 @@ class OCRModel(pl.LightningModule):
             )
             optim_dict.update({'lr_scheduler': lr_scheduler})
         return optim_dict
-
-

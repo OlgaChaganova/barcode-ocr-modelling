@@ -2,16 +2,14 @@ import torch
 
 
 class Encoder(object):
-    def __init__(self):
-        ...
 
-    @staticmethod
-    def encode(text: str) -> torch.tensor:
+    @classmethod
+    def encode(cls, text: str) -> torch.tensor:
         text = list(map(int, list(text)))
         return torch.tensor(text)
 
-    @staticmethod
-    def decode(encoded_text: torch.tensor) -> str:
+    @classmethod
+    def decode(cls, encoded_text: torch.tensor) -> str:
         text = encoded_text.tolist()
         text = list(map(str, text))
         return ''.join(text)

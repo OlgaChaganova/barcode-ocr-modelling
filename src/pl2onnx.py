@@ -48,8 +48,8 @@ def convert_from_checkpoint(args: tp.Any, config: Config) -> tp.Tuple[str, torch
         model_path,
         input_sample,
         export_params=True,
-        input_names = ['input'],  # the model's input names
-        output_names = ['output'],  # the model's output names
+        input_names=['input'],  # the model's input names
+        output_names=['output'],  # the model's output names
     )
 
     if os.path.isfile(model_path):
@@ -65,12 +65,13 @@ def check(model_path: str, input_sample: torch.tensor, output_sample: torch.tens
     ort_inputs = {ort_session.get_inputs()[0].name: input_sample.numpy()}
     output_sample_onnx = ort_session.run(None, ort_inputs)[0]
 
-    if np.allclose(output_sample_onnx, output_sample.numpy(), atol=1e-2):
+    atol = 1e-3
+    if np.allclose(output_sample_onnx, output_sample.numpy(), atol=atol):
         logging.info('Model can be loaded and outputs look good!')
     else:
         logging.info(f'ONNX: {output_sample_onnx.shape}, torch: {output_sample.numpy().shape}')
         logging.info(f'ONNX: {output_sample_onnx[0]}, torch: {output_sample.numpy()[0]}')
-        logging.error('Outputs of the converted model don\'t match output of the original torch model.')
+        logging.error('Outputs of the converted model do not match output of the original torch model.')
 
 
 if __name__ == '__main__':

@@ -4,13 +4,13 @@ import os
 import typing as tp
 from runpy import run_path
 
-import wandb
 from clearml import Task
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import RichModelSummary
 from pytorch_lightning.callbacks.progress import TQDMProgressBar
 from pytorch_lightning.loggers import WandbLogger
 
+import wandb
 from configs.base import Config
 from data.dataset import OCRBarcodeDataModule
 from model import OCRModel
@@ -59,7 +59,7 @@ def main(args: tp.Any, config: Config):
             task = Task.init(project_name=config.project.project_name, task_name=config.project.task_name)
             task.connect(config_dict)
             task.upload_artifact('exp_config', artifact_object=args.config, delete_after_upload=False)
-            logger=True
+            logger = True
 
         elif args.logger == 'wandb':
             logger = WandbLogger(
@@ -112,4 +112,3 @@ if __name__ == '__main__':
     exp_config = config_module['CONFIG']
     seed_everything(exp_config.common.seed, workers=True)
     main(args, exp_config)
-

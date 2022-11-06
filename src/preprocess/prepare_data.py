@@ -8,10 +8,9 @@ import typing as tp
 from pathlib import Path
 
 import cv2
+from detector import BarcodeDetector
 from omegaconf import OmegaConf
 from tqdm import tqdm
-
-from detector import BarcodeDetector
 
 
 def parse():
@@ -56,7 +55,7 @@ def crop_images(root: str, new_root: str, detector_cfg: str, img_ext: tp.Literal
     for file in tqdm(files):
         image = cv2.imread(file)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        try:
+        try:  # noqa: WPS229
             detected_image = detector.detect(image)
             save_path = file.replace(root, new_root)
             cv2.imwrite(save_path, cv2.cvtColor(detected_image, cv2.COLOR_RGB2BGR))

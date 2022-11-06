@@ -1,29 +1,28 @@
 import pytorch_lightning as pl
 
+from configs.config import Config, LRScheduler, Optimizer
 
-from configs.config import Config
-from configs.config import LRScheduler
-from configs.config import Optimizer
+SEP = '_'
 
 
 def _get_dict_for_optimizer(config_optimizer: Optimizer) -> dict:
-    _dict = dict()
-    _dict['_'.join(['optimizer', 'name'])] = config_optimizer.name
+    opt_dict = {}
+    opt_dict[SEP.join(['optimizer', 'name'])] = config_optimizer.name
     for key, value in config_optimizer.opt_params.items():
-        _dict['_'.join(['optimizer', key])] = value
-    return _dict
+        opt_dict[SEP.join(['optimizer', key])] = value
+    return opt_dict
 
 
 def _get_dict_for_lr_scheduler(config_lr_scheduler: LRScheduler) -> dict:
-    _dict = dict()
-    _dict['_'.join(['lr_scheduler', 'name'])] = config_lr_scheduler.name
+    lr_dict = {}
+    lr_dict[SEP.join(['lr_scheduler', 'name'])] = config_lr_scheduler.name
     for key, value in config_lr_scheduler.lr_sched_params.items():
-        _dict['_'.join(['lr_scheduler', key])] = value
-    return _dict
+        lr_dict[SEP.join(['lr_scheduler', key])] = value
+    return lr_dict
 
 
 def get_config_dict(model: pl.LightningModule, datamodule: pl.LightningDataModule, config: Config) -> dict:
-    config_dict = dict()
+    config_dict = {}
     model_dict = dict(model.hparams)
     datamodule_dict = dict(datamodule.hparams)
     trainer_dict = config.train.trainer_params

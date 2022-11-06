@@ -4,28 +4,28 @@ import random
 import typing as tp
 
 import albumentations as alb
-import albumentations.pytorch as alb_pt
 import cv2
 import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
+from albumentations import pytorch as alb_pt
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import functional as tvf
 
-from .encoder import Encoder
+from data.encoder import Encoder
 
 
 class OCRBarcodeDataset(Dataset):
     """Barcode OCR dataset."""
 
     def __init__(
-            self,
-            images_dir: str,
-            annot_df: pd.DataFrame,
-            add_border,
-            img_height: int,
-            img_width: int,
+        self,
+        images_dir: str,
+        annot_df: pd.DataFrame,
+        add_border,
+        img_height: int,
+        img_width: int,
     ):
         """
         Init OCR Barcode dataset.
@@ -55,10 +55,8 @@ class OCRBarcodeDataset(Dataset):
 
         self.transform = alb.Compose(
             [
-                # alb.Perspective(scale=0.05, keep_size=True, pad_mode=0, pad_val=(0, 0, 0), always_apply=True),
                 alb.SmallestMaxSize(max_size=img_height, interpolation=0, always_apply=True),
-                alb.PadIfNeeded(min_height=img_height, min_width=img_width, border_mode=0, value=(0, 0, 0), always_apply=True),
-                # alb.Normalize(),
+                alb.PadIfNeeded(min_height=img_height, min_width=img_width, border_mode=0, value=(0, 0, 0), always_apply=True),  # noqa: E501
                 alb_pt.ToTensorV2(),
             ],
         )
@@ -87,6 +85,8 @@ class OCRBarcodeDataset(Dataset):
 
     def __getitem__(self, ind):
         add = self.add_border
+        maxuit8 = 255
+
         filename, text, p1, p2 = self.annot_df.iloc[ind, :]
         image = self.load_image(filename)
         y_min, x_min = list(map(int, p1.replace('(', '').replace(')', '').split(',')))
@@ -98,7 +98,7 @@ class OCRBarcodeDataset(Dataset):
         if image.shape[0] > image.shape[1]:
             image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
 
-        image = self.transform(image=image)['image'] / 255.
+        image = self.transform(image=image)['image'] / maxuit8
 
         if image.shape != (3, self.img_height, self.img_width):
             image = tvf.resize(image, size=[self.img_height, self.img_width])
