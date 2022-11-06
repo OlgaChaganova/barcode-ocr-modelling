@@ -1,0 +1,10 @@
+image: python:3.10
+
+stages:
+  - lint
+
+lint:
+    stage: lint
+    script:
+      - python3 -m pip install wemake-python-styleguide==0.16.1
+      - make lint
