@@ -34,3 +34,8 @@ prepare_data:
 .PHONY: train
 train:
 	python src/train.py --log --logger clearml
+
+
+.PHONY: lint
+lint:
+	flake8 src/
