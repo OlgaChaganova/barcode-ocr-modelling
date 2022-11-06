@@ -1,6 +1,13 @@
+.PHONY: install
+install:
+	pip install -r requirements.txt
+	pip install -U rich
+
+
 .PHONY: download_models_ssh
 download_models_ssh:
 	dvc get git@gitlab.com:oliyyaa/cvr-hw2-segmdet.git weights/ -o models/
+
 
 .PHONY: clean_models
 clean_models:
@@ -26,4 +33,4 @@ prepare_data:
 
 .PHONY: train
 train:
-	python src/train.py
+	python src/train.py --log --logger clearml
