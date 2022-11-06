@@ -21,7 +21,7 @@ download_models:
 	make clean_models
 
 
-.PHONY: download_detector
+.PHONY: download_models_dvc
 download_detector:
 	dvc pull -R models/
 
