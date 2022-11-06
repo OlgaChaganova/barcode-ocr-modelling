@@ -21,9 +21,9 @@ download_detector:
 
 .PHONY: prepare_data
 prepare_data:
-	python src/preprocess/prepare_data.py data/barcodes-annotated-gorai_prepared data/barcodes-annotated-gorai_detected
+	python src/preprocess/prepare_data.py data/barcodes-annotated-gorai data/barcodes-annotated-gorai_detected
 
 
 .PHONY: train
 train:
-    python src/train.py
+	python src/train.py
