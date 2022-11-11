@@ -4,13 +4,13 @@ import os
 import typing as tp
 from runpy import run_path
 
+import wandb
 from clearml import Task
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import RichModelSummary
 from pytorch_lightning.callbacks.progress import TQDMProgressBar
 from pytorch_lightning.loggers import WandbLogger
 
-import wandb
 from configs.base import Config
 from data.dataset import OCRBarcodeDataModule
 from model import OCRModel
