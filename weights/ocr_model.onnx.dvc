@@ -1,0 +1,4 @@
+outs:
+- md5: 401e4c75d433e09c70fb7d0330a33737
+  size: 33539127
+  path: ocr_model.onnx
