@@ -1,0 +1,5 @@
+model_path: 'models/yolov5s_barcode_detector.torchscript'
+device: 'cpu'
+img_size: 480
+conf_thresh: 0.7
+iou_thresh: 0.6

@@ -1,0 +1,5 @@
+model_path: '/home/olik/edu/cvr-hw2-ocr/weights/epoch=320-step=963.onnx'
+blank: 10
+img_height: 128
+img_width: 512
+add_border: 5
